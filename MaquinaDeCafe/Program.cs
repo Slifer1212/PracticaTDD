@@ -1,9 +1,12 @@
+using System;
+
 namespace MaquinaDeCafe
 {
     class Program
     {
         static void Main(string[] args)
         {
+            // Encabezado
             Console.WriteLine("╔═══════════════════════════════════════╗");
             Console.WriteLine("║   MÁQUINA DISPENSADORA DE CAFÉ        ║");
             Console.WriteLine("╚═══════════════════════════════════════╝");
@@ -27,31 +30,30 @@ namespace MaquinaDeCafe
             MostrarInventario(maquina);
             Console.WriteLine();
 
-            // Ejemplo 1: Solicitar un café pequeño
-            Console.WriteLine("═══════════════════════════════════════");
-            Console.WriteLine("☕ Ejemplo 1: Café Pequeño (3 Oz)");
-            Console.WriteLine("═══════════════════════════════════════");
-            EjecutarPedido(maquina, "pequeno", 1, 2);
+            // Bucle interactivo
+            bool continuar = true;
+            while (continuar)
+            {
+                Console.WriteLine("\n═══════════════════════════════════════");
+                Console.WriteLine("☕ NUEVO PEDIDO");
+                Console.WriteLine("═══════════════════════════════════════");
 
-            // Ejemplo 2: Solicitar un café mediano
-            Console.WriteLine("\n═══════════════════════════════════════");
-            Console.WriteLine("☕ Ejemplo 2: Café Mediano (5 Oz)");
-            Console.WriteLine("═══════════════════════════════════════");
-            EjecutarPedido(maquina, "mediano", 1, 3);
+                string tipoVaso = PedirTamano();
+                int cantidad = PedirEntero("¿Cuántos cafés desea? (ingrese un número entero mayor que 0): ", minValue: 1);
+                int azucar = PedirEntero("¿Cuántas cucharadas de azúcar por vaso? (0 o más): ", minValue: 0);
 
-            // Ejemplo 3: Solicitar un café grande
-            Console.WriteLine("\n═══════════════════════════════════════");
-            Console.WriteLine("☕ Ejemplo 3: Café Grande (7 Oz)");
-            Console.WriteLine("═══════════════════════════════════════");
-            EjecutarPedido(maquina, "grande", 1, 1);
+                Console.WriteLine();
+                EjecutarPedidoInteractivo(maquina, tipoVaso, cantidad, azucar);
 
-            // Ejemplo 4: Solicitar múltiples cafés
-            Console.WriteLine("\n═══════════════════════════════════════");
-            Console.WriteLine("☕ Ejemplo 4: 3 Cafés Pequeños");
-            Console.WriteLine("═══════════════════════════════════════");
-            EjecutarPedido(maquina, "pequeno", 3, 5);
+                Console.WriteLine();
+                MostrarInventario(maquina);
 
-            // Mostrar estado final
+                // Preguntar si desea otro pedido
+                Console.Write("\n¿Desea realizar otro pedido? (s/n): ");
+                string resp = Console.ReadLine()?.Trim().ToLower() ?? "n";
+                continuar = resp == "s" || resp == "si";
+            }
+
             Console.WriteLine("\n📊 Estado Final:");
             MostrarInventario(maquina);
 
@@ -60,30 +62,87 @@ namespace MaquinaDeCafe
             Console.WriteLine("╚═══════════════════════════════════════╝");
         }
 
-        static void EjecutarPedido(MaquinaDeCafe maquina, string tipoVaso, int cantidad, int azucar)
+        // Pide al usuario que elija un tamaño y devuelve "pequeno", "mediano" o "grande"
+        static string PedirTamano()
         {
-            Console.WriteLine($"📝 Pedido: {cantidad} vaso(s) de tipo '{tipoVaso}' con {azucar} cucharada(s) de azúcar");
-            
-            Vaso vaso = maquina.GetTipoDeVaso(tipoVaso);
-            if (vaso != null)
+            while (true)
             {
-                string resultado = maquina.GetVasoDeCafe(vaso, cantidad, azucar);
-                
-                if (resultado == "Felicitaciones")
+                Console.WriteLine("Seleccione el tamaño del café:");
+                Console.WriteLine("1. Pequeño (3 Oz)");
+                Console.WriteLine("2. Mediano  (5 Oz)");
+                Console.WriteLine("3. Grande   (7 Oz)");
+                Console.Write("👉 Opción (1-3): ");
+
+                string opcion = Console.ReadLine()?.Trim();
+                switch (opcion)
                 {
-                    Console.WriteLine("✅ " + resultado + " - Su café está listo!");
+                    case "1":
+                    case "pequeno":
+                    case "pequeño":
+                        return "pequeno";
+                    case "2":
+                    case "mediano":
+                        return "mediano";
+                    case "3":
+                    case "grande":
+                        return "grande";
+                    default:
+                        Console.WriteLine("⚠️ Opción inválida. Intente de nuevo.\n");
+                        break;
                 }
-                else
-                {
-                    Console.WriteLine("❌ " + resultado);
-                }
-            }
-            else
-            {
-                Console.WriteLine("❌ Tipo de vaso no válido");
             }
         }
 
+        // Lee un entero validado por el usuario (con mensaje, opcionalmente con un minimo)
+        static int PedirEntero(string mensaje, int? minValue = null, int? maxValue = null)
+        {
+            while (true)
+            {
+                Console.Write(mensaje);
+                string entrada = Console.ReadLine();
+                if (int.TryParse(entrada, out int valor))
+                {
+                    if (minValue.HasValue && valor < minValue.Value)
+                    {
+                        Console.WriteLine($"⚠️ Debe ser al menos {minValue.Value}. Intente de nuevo.");
+                        continue;
+                    }
+                    if (maxValue.HasValue && valor > maxValue.Value)
+                    {
+                        Console.WriteLine($"⚠️ No puede ser mayor que {maxValue.Value}. Intente de nuevo.");
+                        continue;
+                    }
+                    return valor;
+                }
+                Console.WriteLine("⚠️ Entrada no válida. Ingrese un número entero.");
+            }
+        }
+
+        // Ejecuta el pedido (usa la lógica existente que tenías)
+        static void EjecutarPedidoInteractivo(MaquinaDeCafe maquina, string tipoVaso, int cantidad, int azucar)
+        {
+            Console.WriteLine($"📝 Pedido: {cantidad} vaso(s) de tipo '{tipoVaso}' con {azucar} cucharada(s) de azúcar por vaso.");
+
+            Vaso vaso = maquina.GetTipoDeVaso(tipoVaso);
+            if (vaso == null)
+            {
+                Console.WriteLine("❌ Tipo de vaso no válido.");
+                return;
+            }
+
+            string resultado = maquina.GetVasoDeCafe(vaso, cantidad, azucar);
+
+            if (resultado == "Felicitaciones")
+            {
+                Console.WriteLine("✅ " + resultado + " - Su(s) café(s) está(n) listo(s)!");
+            }
+            else
+            {
+                Console.WriteLine("❌ " + resultado);
+            }
+        }
+
+        // Muestra el inventario (mismo formato que tenías)
         static void MostrarInventario(MaquinaDeCafe maquina)
         {
             Console.WriteLine($"   ☕ Café disponible: {maquina.Cafetera.GetCantidadDeCafe()} Oz");
